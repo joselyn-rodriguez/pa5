@@ -13,19 +13,19 @@ knitr::opts_chunk$set(message = FALSE)
 library(tidyverse)
 library(psych)
 ```
-# Programming Assignment 5 (midterm)
+###  Programming Assignment 5 (midterm)
 
-## TLDR: you want to know if proficiency scores vary as a function of age (younger/older) and composite aptitude score.
+#### TLDR: you want to know if proficiency scores vary as a function of age (younger/older) and composite aptitude score.
 
-# Load the dataset from your index.Rmd file. Pay special attention to the path. Don’t forget where the .csv file lives. Print the first 6 rows of the dataframe.
+### 5. Load the dataset from your index.Rmd file. Pay special attention to the path. Don’t forget where the .csv file lives. Print the first 6 rows of the dataframe.
 
 ```{r load}
 data <- read_csv("data_raw/pa_5_data/lang_data_raw.csv")
 head(data, row = 6)
 ```
-#  Tidy the dataset. Keep in mind the principles of tidy data. Use sections, text, comments, etc. to explain every step of the process.
+### 6. Tidy the dataset. Keep in mind the principles of tidy data. Use sections, text, comments, etc. to explain every step of the process.
 
-## Create a new column in the dataset for the composite language learning score by taking the log of iq divided by 80 plus the log of motivation. Call this variable composite_score. After you have created this variable, you can standardize or center it if you want (i.e., create z-scores, or subtract the mean from each value), but this is not obligatory.
+#### 7. Create a new column in the dataset for the composite language learning score by taking the log of iq divided by 80 plus the log of motivation. Call this variable composite_score. After you have created this variable, you can standardize or center it if you want (i.e., create z-scores, or subtract the mean from each value), but this is not obligatory.
 
 ```{r tidy}
 
@@ -33,11 +33,11 @@ head(data, row = 6)
 data_tidy <- data %>% 
               separate("id", into = c("subject", "gender", "age")) %>% 
               mutate(temp = (log(iq/80)) + log(motivation)) %>% 
-              mutate(composite_score = ((temp - mean(temp))/sd(temp)))
+              mutate(composite_score = ((temp - mean(temp))/sd(temp))) # NOTE: i do use the zscore
 # write_csv(data_tidy, "data_clean/data_tidy.csv") # saving data
 ```
 
-# Provide a table of descriptive statistics. You decide what is relevant based on the variables you have and your hypotheses. Include any observations you can make from the table.
+### 8. Provide a table of descriptive statistics. You decide what is relevant based on the variables you have and your hypotheses. Include any observations you can make from the table.
 
 ```{r}
 data_framed <- as.data.frame(data_tidy) # because you can't use tibbles with this function
@@ -51,7 +51,7 @@ describeBy(composite_score~gender+age, mat=T, data = data_framed)
 ```
 Given the general output from the table, it looks like there's only a difference across younger and older participants in their proficiency. In other words, they have the same motivation and iq (and thus composite_score too) but younger participants have slightly better proficiency. Overall, then, younger female participants have the highest proficiency and older male participants had the lowest according to just the mean proficiency scores.
 
-# Create an informative plot of the data. You only get one plot, so make it count. Keep in mind the types of variables that you have, particularly those that are relevant to your hypotheses. Interpret the plot (in prose)
+### 9. Create an informative plot of the data. You only get one plot, so make it count. Keep in mind the types of variables that you have, particularly those that are relevant to your hypotheses. Interpret the plot (in prose)
 
 
 ```{r one-plot}
@@ -67,10 +67,10 @@ plot
 ```
 
 
-This plot shows a general trend that as composite_score (language aptitude) increases, so does proficiency. However, comparing older and younger participants, it looks as if younger participants begin with a higher proficiency and while they continue to have higher profiency than old participants as their composite score increases, it also shows that given an increasing composite_score, older learners have a larger increase in proficiency than younger learners (as indicated by the slope of the fit line to the graph).
+This plot shows a general trend that as composite_score (language aptitude) increases, so does proficiency. However, comparing older and younger participants, it looks as if younger participants begin with a higher proficiency and while they continue to have higher proficiency than old participants as their composite score increases, it also shows that given an increasing composite_score, older learners have a larger increase in proficiency than younger learners (as indicated by the slope of the fit line to the graph).
 
 
-# Again, you are interested in determining if proficiency scores vary as a function of age and composite_score. Fit the appropriate model. Test the two-way interaction, the main effect of age, and the main effect of composite_score.
+### 10. Again, you are interested in determining if proficiency scores vary as a function of age and composite_score. Fit the appropriate model. Test the two-way interaction, the main effect of age, and the main effect of composite_score.
 
 ```{r model}
 
@@ -89,7 +89,7 @@ model_3 <- lm(prof~age*composite_score, data = data_tidy)
 nmc <- anova(model_null,model_1,model_2,model_3) # all significant, including predictors and interaction is justified
 ```
 
-# Print a summary of the best model and test that the model assumptions have been met (you can use plots for this, but you are not required to include them in the final version of your assignment).
+### 11. Print a summary of the best model and test that the model assumptions have been met (you can use plots for this, but you are not required to include them in the final version of your assignment).
 
 ```{r}
 sum_mod_3 <- summary(model_3)
@@ -97,14 +97,11 @@ sum_mod_3
 ds4ling::diagnosis(model_3) #assumptions of normality of residuals and homoskedasticity seem good!
 ```
 
-# Write up the results. You should include a description of the statistical analyses you have done in one paragraph, and the actual results in another. Don’t forget to include an overall assessment of goodness of fit (variance explained).
+### 12. Write up the results. You should include a description of the statistical analyses you have done in one paragraph, and the actual results in another. Don’t forget to include an overall assessment of goodness of fit (variance explained).
 
-Data of proficiency in a second language was analyzed using a general linear model. Proficiency was the criterion with age (younger/older) and language aptitude (referred to as composite score) as predictors. The age factor was dummy coded with older set as the reference group. Main effects and the *age* and *composite score* interaction were assessed using nested model comparison. Experiment-wise alpha was set at 0.05.
+Data of proficiency in a second language was analyzed using a general linear model. Proficiency was the criterion with age (younger/older) and composite score as predictors. Composite score was centered using a z-score prior to analysis. The age factor was dummy coded with older set as the reference group. Main effects and the *age* and *composite score* interaction were assessed using nested model comparison. Experiment-wise alpha was set at 0.05.
 
-There was a main effect of age (F(1) = `r nmc$F[2]`, p < 0.001), and composite score (F(1) = `r nmc$F[3]`, p < 0.001), and the age by composite score interaction (F[1] = `r nmc$F[4]`, p < 0.01). The model containing the interaction between age and composite provided the best fit of the data (`r sum_mod_3$r.squared`). GIven the results of this model, proficiency generally increased as composite score of the participants increased suggesting that greater aptitude led to greater proficiency. However, this effect was modulated by age such that younger participants increased at a slower rate than adults as composite score increased. In other words, for every unit increase in composite score, younger participants' proficiency score increased by `r -sum_mod_3$coefficients[4]` less than that of the older participants (SE = `r sum_mod_3$coefficients[1,2]`, t = `r sum_mod_3$coefficients[4,3]`, p < 0.01). Older participants, on the other hand, increased their proficiency score by `r sum_mod_3$coefficients[1]` for every unit increase in their composite_score (SE = `r sum_mod_3$coefficients[1,2]`, t = `r sum_mod_3$coefficients[1,3]`, p < 0.001). These results suggest that while younger L2 learners have an advantage initially, as language aptitude in younger learners increases, their proficiency increases at a slower rate compared with adults. In other words, language aptitude has more of an effect on language proficiency for older learners than for younger learners.
+There was a main effect of age (F(1) = `r nmc$F[2]`, p < 0.001), and composite score (F(1) = `r nmc$F[3]`, p < 0.001), and the age by composite score interaction (F[1] = `r nmc$F[4]`, p < 0.01). The model containing the interaction between age and composite provided the best fit of the data (`r sum_mod_3$r.squared`). Given the results of this model, proficiency generally increased as composite score of the participants increased suggesting that greater aptitude led to greater proficiency. However, this effect was modulated by age such that younger participants increased at a slower rate than adults as composite score increased. In other words, for every unit increase in composite score, younger participants' proficiency score increased by `r -sum_mod_3$coefficients[4]` less than that of the older participants (SE = `r sum_mod_3$coefficients[1,2]`, t = `r sum_mod_3$coefficients[4,3]`, p < 0.01). Older participants, on the other hand, increased their proficiency score by `r sum_mod_3$coefficients[1]` for every unit increase in their composite_score (SE = `r sum_mod_3$coefficients[1,2]`, t = `r sum_mod_3$coefficients[1,3]`, p < 0.001). These results suggest that while younger L2 learners have an advantage initially, as language aptitude in younger learners increases, their proficiency increases at a slower rate compared with adults. In other words, language aptitude has more of an effect on language proficiency for older learners than for younger learners.
 
-```{r}
-sum_mod_3$coefficients
-```
 
 
